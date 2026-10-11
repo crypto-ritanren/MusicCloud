@@ -27,8 +27,13 @@ client_secret*.json
 .tempmediaStorage/
 
 # Local draft notes and developer scripts
-О ключе SHA-1.txt
+*SHA-1*.txt
 ai_agent_task_architecture.md
 readme.txt
 byok_helper.html
 *.ps1
+
+# Graphify knowledge graph outputs
+graphify-out/
+.graphify*
+

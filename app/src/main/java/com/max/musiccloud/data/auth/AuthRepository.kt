@@ -8,6 +8,7 @@ import android.util.Log
 import androidx.browser.customtabs.CustomTabsIntent
 import com.max.musiccloud.BuildConfig
 import com.max.musiccloud.data.remote.ResilientDns
+import com.max.musiccloud.ui.theme.ThemeMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -66,7 +67,15 @@ class AuthRepository(private val context: Context) {
         private const val KEY_USER_EMAIL = "oauth_user_email"
         private const val KEY_USER_NAME = "oauth_user_name"
         private const val KEY_USER_PHOTO = "oauth_user_photo"
+        private const val KEY_THEME_MODE = "app_theme_mode"
     }
+
+    private val _themeMode = MutableStateFlow(
+        runCatching {
+            ThemeMode.valueOf(prefs.getString(KEY_THEME_MODE, ThemeMode.SYSTEM.name) ?: ThemeMode.SYSTEM.name)
+        }.getOrDefault(ThemeMode.SYSTEM)
+    )
+    val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
 
     private val _webClientId = MutableStateFlow(
         prefs.getString(KEY_CLIENT_ID, DEFAULT_WEB_CLIENT_ID) ?: DEFAULT_WEB_CLIENT_ID
@@ -198,6 +207,12 @@ class AuthRepository(private val context: Context) {
             .apply()
         _webClientId.value = DEFAULT_WEB_CLIENT_ID
         _clientSecret.value = DEFAULT_CLIENT_SECRET
+    }
+
+    fun setThemeMode(mode: ThemeMode) {
+        _themeMode.value = mode
+        prefs.edit().putString(KEY_THEME_MODE, mode.name).apply()
+        Log.d(TAG, "Saved theme mode '$mode'")
     }
 
     /**

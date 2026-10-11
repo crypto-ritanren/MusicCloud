@@ -7,21 +7,16 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.layout.ContentScale
-import coil.compose.AsyncImage
-import java.io.File
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -39,18 +34,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.max.musiccloud.data.local.TrackEntity
-import com.max.musiccloud.ui.theme.AccentCyan
-import com.max.musiccloud.ui.theme.AccentPink
-import com.max.musiccloud.ui.theme.AccentPurple
-import com.max.musiccloud.ui.theme.DarkSurfaceVariant
-import com.max.musiccloud.ui.theme.TextPrimary
-import com.max.musiccloud.ui.theme.TextSecondary
-import com.max.musiccloud.ui.theme.TextTertiary
+import com.max.musiccloud.ui.theme.AppTheme
+import java.io.File
 
 @Composable
 fun TrackItem(
@@ -61,6 +53,8 @@ fun TrackItem(
     onFavoriteClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = AppTheme.colors
+
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val alphaAnim by infiniteTransition.animateFloat(
         initialValue = 0.6f,
@@ -73,7 +67,7 @@ fun TrackItem(
     )
 
     val itemBg = if (isCurrentTrack) {
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+        colors.accentPurple.copy(alpha = if (colors.isDark) 0.14f else 0.10f)
     } else {
         Color.Transparent
     }
@@ -92,7 +86,7 @@ fun TrackItem(
             modifier = Modifier
                 .size(48.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(DarkSurfaceVariant),
+                .background(colors.surfaceVariant),
             contentAlignment = Alignment.Center
         ) {
             val artModel = track.coverArtPath?.let { File(it) } ?: track.thumbnailUrl
@@ -109,9 +103,9 @@ fun TrackItem(
                         .fillMaxSize()
                         .background(
                             if (isCurrentTrack) {
-                                Brush.linearGradient(listOf(AccentPurple, AccentCyan))
+                                Brush.linearGradient(listOf(colors.accentPurple, colors.accentCyan))
                             } else {
-                                Brush.linearGradient(listOf(DarkSurfaceVariant, DarkSurfaceVariant))
+                                Brush.linearGradient(listOf(colors.surfaceVariant, colors.surfaceElevated))
                             }
                         ),
                     contentAlignment = Alignment.Center
@@ -119,7 +113,7 @@ fun TrackItem(
                     Icon(
                         imageVector = Icons.Default.MusicNote,
                         contentDescription = null,
-                        tint = if (isCurrentTrack) Color.White else TextSecondary,
+                        tint = if (isCurrentTrack) Color.White else colors.textSecondary,
                         modifier = Modifier.size(22.dp)
                     )
                 }
@@ -154,7 +148,7 @@ fun TrackItem(
                     fontWeight = if (isCurrentTrack) FontWeight.Bold else FontWeight.Medium,
                     fontSize = 15.sp
                 ),
-                color = if (isCurrentTrack) MaterialTheme.colorScheme.primary else TextPrimary,
+                color = if (isCurrentTrack) colors.accentPurple else colors.textPrimary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -167,7 +161,7 @@ fun TrackItem(
                 Text(
                     text = track.artist,
                     style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
-                    color = TextSecondary,
+                    color = colors.textSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false)
@@ -177,7 +171,7 @@ fun TrackItem(
                     Text(
                         text = " • ${track.formattedSize}",
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                        color = TextTertiary
+                        color = colors.textTertiary
                     )
                 }
             }
@@ -193,7 +187,7 @@ fun TrackItem(
             Icon(
                 imageVector = if (track.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                 contentDescription = "Favorite",
-                tint = if (track.isFavorite) AccentPink else TextTertiary,
+                tint = if (track.isFavorite) colors.accentPink else colors.textTertiary,
                 modifier = Modifier.size(20.dp)
             )
         }

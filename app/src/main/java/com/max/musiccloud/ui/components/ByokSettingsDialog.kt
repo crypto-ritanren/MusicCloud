@@ -4,7 +4,6 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -46,7 +45,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
@@ -55,16 +53,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.max.musiccloud.ui.theme.AccentCyan
-import com.max.musiccloud.ui.theme.AccentPink
-import com.max.musiccloud.ui.theme.AccentPurple
-import com.max.musiccloud.ui.theme.DarkBg
-import com.max.musiccloud.ui.theme.DarkSurface
-import com.max.musiccloud.ui.theme.DarkSurfaceVariant
+import com.max.musiccloud.ui.theme.AppTheme
 import com.max.musiccloud.ui.theme.SuccessGreen
-import com.max.musiccloud.ui.theme.TextPrimary
-import com.max.musiccloud.ui.theme.TextSecondary
-import com.max.musiccloud.ui.theme.TextTertiary
 
 @Composable
 fun ByokSettingsDialog(
@@ -77,6 +67,7 @@ fun ByokSettingsDialog(
 ) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
+    val colors = AppTheme.colors
 
     var clientId by remember(initialClientId) { mutableStateOf(initialClientId) }
     var clientSecret by remember(initialClientSecret) { mutableStateOf(initialClientSecret) }
@@ -116,13 +107,13 @@ fun ByokSettingsDialog(
 
     AlertDialog(
         onDismissRequest = onDismissRequest,
-        containerColor = DarkBg,
+        containerColor = colors.surface,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.Key,
                     contentDescription = null,
-                    tint = AccentCyan,
+                    tint = colors.accentCyan,
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(10.dp))
@@ -132,7 +123,7 @@ fun ByokSettingsDialog(
                         fontWeight = FontWeight.Bold,
                         fontSize = 19.sp
                     ),
-                    color = TextPrimary
+                    color = colors.textPrimary
                 )
             }
         },
@@ -145,7 +136,7 @@ fun ByokSettingsDialog(
                 Text(
                     text = "Введите Web Client ID и Secret из Google Cloud Console (тип Web application).",
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
+                    color = colors.textSecondary
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
@@ -154,8 +145,8 @@ fun ByokSettingsDialog(
                 OutlinedTextField(
                     value = clientId,
                     onValueChange = { clientId = clean(it) },
-                    label = { Text("Web Client ID", color = TextSecondary) },
-                    placeholder = { Text("...apps.googleusercontent.com", color = TextTertiary) },
+                    label = { Text("Web Client ID", color = colors.textSecondary) },
+                    placeholder = { Text("...apps.googleusercontent.com", color = colors.textTertiary) },
                     singleLine = false,
                     maxLines = 3,
                     trailingIcon = {
@@ -169,17 +160,17 @@ fun ByokSettingsDialog(
                             Icon(
                                 imageVector = Icons.Default.ContentPaste,
                                 contentDescription = "Paste",
-                                tint = AccentCyan
+                                tint = colors.accentCyan
                             )
                         }
                     },
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = DarkSurfaceVariant,
-                        unfocusedContainerColor = DarkSurface,
-                        focusedBorderColor = if (isClientIdValid) SuccessGreen else AccentPurple,
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.1f),
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary
+                        focusedContainerColor = colors.surfaceVariant,
+                        unfocusedContainerColor = colors.surface,
+                        focusedBorderColor = if (isClientIdValid) SuccessGreen else colors.accentPurple,
+                        unfocusedBorderColor = colors.border.copy(alpha = if (colors.isDark) 0.15f else 0.6f),
+                        focusedTextColor = colors.textPrimary,
+                        unfocusedTextColor = colors.textPrimary
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -194,14 +185,14 @@ fun ByokSettingsDialog(
                         Icon(
                             imageVector = if (isClientIdValid) Icons.Default.CheckCircle else Icons.Default.Warning,
                             contentDescription = null,
-                            tint = if (isClientIdValid) SuccessGreen else AccentPink,
+                            tint = if (isClientIdValid) SuccessGreen else colors.accentPink,
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = validationMessage,
                             style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                            color = if (isClientIdValid) SuccessGreen else AccentPink
+                            color = if (isClientIdValid) SuccessGreen else colors.accentPink
                         )
                     }
                 }
@@ -212,8 +203,8 @@ fun ByokSettingsDialog(
                 OutlinedTextField(
                     value = clientSecret,
                     onValueChange = { clientSecret = clean(it) },
-                    label = { Text("Client Secret", color = TextSecondary) },
-                    placeholder = { Text("GOCSPX-...", color = TextTertiary) },
+                    label = { Text("Client Secret", color = colors.textSecondary) },
+                    placeholder = { Text("GOCSPX-...", color = colors.textTertiary) },
                     visualTransformation = if (isSecretVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         Row {
@@ -227,25 +218,25 @@ fun ByokSettingsDialog(
                                 Icon(
                                     imageVector = Icons.Default.ContentPaste,
                                     contentDescription = "Paste",
-                                    tint = AccentCyan
+                                    tint = colors.accentCyan
                                 )
                             }
                             IconButton(onClick = { isSecretVisible = !isSecretVisible }) {
                                 Icon(
                                     imageVector = if (isSecretVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                                     contentDescription = "Toggle visibility",
-                                    tint = TextSecondary
+                                    tint = colors.textSecondary
                                 )
                             }
                         }
                     },
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = DarkSurfaceVariant,
-                        unfocusedContainerColor = DarkSurface,
-                        focusedBorderColor = AccentPurple,
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.1f),
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary
+                        focusedContainerColor = colors.surfaceVariant,
+                        unfocusedContainerColor = colors.surface,
+                        focusedBorderColor = colors.accentPurple,
+                        unfocusedBorderColor = colors.border.copy(alpha = if (colors.isDark) 0.15f else 0.6f),
+                        focusedTextColor = colors.textPrimary,
+                        unfocusedTextColor = colors.textPrimary
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -262,23 +253,23 @@ fun ByokSettingsDialog(
                         Icon(
                             imageVector = Icons.Default.Folder,
                             contentDescription = null,
-                            tint = AccentCyan
+                            tint = colors.accentCyan
                         )
                     },
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = DarkSurfaceVariant,
-                        unfocusedContainerColor = DarkSurface,
-                        focusedBorderColor = AccentCyan,
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.1f),
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary
+                        focusedContainerColor = colors.surfaceVariant,
+                        unfocusedContainerColor = colors.surface,
+                        focusedBorderColor = colors.accentCyan,
+                        unfocusedBorderColor = colors.border.copy(alpha = if (colors.isDark) 0.15f else 0.6f),
+                        focusedTextColor = colors.textPrimary,
+                        unfocusedTextColor = colors.textPrimary
                     ),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     supportingText = {
                         Text(
                             text = "Сканируется только эта папка и её подпапки (например, User Music). Очистите поле для сканирования всего Диска.",
-                            color = TextTertiary,
+                            color = colors.textTertiary,
                             fontSize = 11.sp
                         )
                     }
@@ -291,22 +282,22 @@ fun ByokSettingsDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(DarkSurfaceVariant)
-                        .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(12.dp))
+                        .background(colors.surfaceVariant)
+                        .border(1.dp, colors.border.copy(alpha = if (colors.isDark) 0.1f else 0.5f), RoundedCornerShape(12.dp))
                         .padding(12.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.Info,
                             contentDescription = null,
-                            tint = AccentCyan,
+                            tint = colors.accentCyan,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = "Обязательный Redirect URI в Google Cloud:",
                             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                            color = AccentCyan
+                            color = colors.accentCyan
                         )
                     }
 
@@ -316,7 +307,8 @@ fun ByokSettingsDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .background(DarkSurface)
+                            .background(colors.surface)
+                            .border(1.dp, colors.border.copy(alpha = if (colors.isDark) 0.15f else 0.5f), RoundedCornerShape(8.dp))
                             .padding(horizontal = 8.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -324,7 +316,7 @@ fun ByokSettingsDialog(
                         Text(
                             text = redirectUri,
                             style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                            color = TextPrimary,
+                            color = colors.textPrimary,
                             modifier = Modifier.weight(1f)
                         )
                         IconButton(
@@ -337,7 +329,7 @@ fun ByokSettingsDialog(
                             Icon(
                                 imageVector = Icons.Default.ContentCopy,
                                 contentDescription = "Copy",
-                                tint = AccentCyan,
+                                tint = colors.accentCyan,
                                 modifier = Modifier.size(16.dp)
                             )
                         }
@@ -348,7 +340,7 @@ fun ByokSettingsDialog(
                     Text(
                         text = "В Google Cloud Console откройте этот Web Client -> блок «Authorized redirect URIs» -> нажмите «+ Add URI» -> вставьте этот адрес и нажмите SAVE.",
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                        color = TextTertiary
+                        color = colors.textTertiary
                     )
                 }
 
@@ -362,7 +354,7 @@ fun ByokSettingsDialog(
                         clientSecret = ""
                         Toast.makeText(context, "Ключи очищены", Toast.LENGTH_SHORT).show()
                     },
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentPink),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.accentPink),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(Icons.Default.RestartAlt, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -384,14 +376,14 @@ fun ByokSettingsDialog(
                     Toast.makeText(context, "Настройки успешно сохранены!", Toast.LENGTH_SHORT).show()
                     onDismissRequest()
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = AccentPurple)
+                colors = ButtonDefaults.buttonColors(containerColor = colors.accentPurple)
             ) {
                 Text("Сохранить", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismissRequest) {
-                Text("Отмена", color = TextSecondary)
+                Text("Отмена", color = colors.textSecondary)
             }
         }
     )

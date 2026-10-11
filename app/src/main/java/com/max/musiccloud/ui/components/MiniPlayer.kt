@@ -11,15 +11,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.layout.ContentScale
-import coil.compose.AsyncImage
-import java.io.File
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MusicNote
@@ -38,16 +34,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.max.musiccloud.playback.PlayerState
-import com.max.musiccloud.ui.theme.AccentCyan
-import com.max.musiccloud.ui.theme.AccentPurple
-import com.max.musiccloud.ui.theme.DarkSurfaceElevated
-import com.max.musiccloud.ui.theme.TextPrimary
-import com.max.musiccloud.ui.theme.TextSecondary
+import com.max.musiccloud.ui.theme.AppTheme
+import java.io.File
 
 @Composable
 fun MiniPlayer(
@@ -58,6 +53,7 @@ fun MiniPlayer(
     modifier: Modifier = Modifier
 ) {
     val track = playerState.currentTrack
+    val colors = AppTheme.colors
 
     AnimatedVisibility(
         visible = track != null,
@@ -72,10 +68,10 @@ fun MiniPlayer(
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 6.dp)
                 .clip(RoundedCornerShape(20.dp))
-                .background(DarkSurfaceElevated.copy(alpha = 0.95f))
+                .background(colors.surfaceElevated.copy(alpha = 0.98f))
                 .border(
                     width = 1.dp,
-                    color = Color.White.copy(alpha = 0.08f),
+                    color = colors.border.copy(alpha = if (colors.isDark) 0.15f else 0.7f),
                     shape = RoundedCornerShape(20.dp)
                 )
                 .clickable(onClick = onExpandClick)
@@ -91,7 +87,7 @@ fun MiniPlayer(
                     modifier = Modifier
                         .size(42.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(DarkSurfaceElevated),
+                        .background(colors.surfaceVariant),
                     contentAlignment = Alignment.Center
                 ) {
                     val artModel = track.coverArtPath?.let { File(it) } ?: track.thumbnailUrl
@@ -106,7 +102,7 @@ fun MiniPlayer(
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(Brush.linearGradient(listOf(AccentPurple, AccentCyan))),
+                                .background(Brush.linearGradient(listOf(colors.accentPurple, colors.accentCyan))),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -131,14 +127,14 @@ fun MiniPlayer(
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp
                         ),
-                        color = TextPrimary,
+                        color = colors.textPrimary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = track.artist,
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                        color = TextSecondary,
+                        color = colors.textSecondary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -151,7 +147,7 @@ fun MiniPlayer(
                             .padding(8.dp)
                             .size(24.dp),
                         strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.primary
+                        color = colors.accentPurple
                     )
                 } else {
                     IconButton(
@@ -161,7 +157,7 @@ fun MiniPlayer(
                         Icon(
                             imageVector = if (playerState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                             contentDescription = if (playerState.isPlaying) "Pause" else "Play",
-                            tint = Color.White,
+                            tint = colors.textPrimary,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -175,7 +171,7 @@ fun MiniPlayer(
                     Icon(
                         imageVector = Icons.Default.SkipNext,
                         contentDescription = "Next",
-                        tint = Color.White.copy(alpha = 0.8f),
+                        tint = colors.textSecondary,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -187,8 +183,8 @@ fun MiniPlayer(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(2.5.dp),
-                color = AccentPurple,
-                trackColor = Color.White.copy(alpha = 0.05f)
+                color = colors.accentPurple,
+                trackColor = colors.border.copy(alpha = 0.3f)
             )
         }
     }

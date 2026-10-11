@@ -31,13 +31,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.BrightnessAuto
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.CloudSync
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -81,32 +86,31 @@ import com.max.musiccloud.ui.TrackFilter
 import com.max.musiccloud.ui.components.ByokSettingsDialog
 import com.max.musiccloud.ui.components.FullPlayerSheet
 import com.max.musiccloud.ui.components.MiniPlayer
+import com.max.musiccloud.ui.components.ThemeSelectionDialog
 import com.max.musiccloud.ui.components.TrackItem
-import com.max.musiccloud.ui.theme.AccentCyan
-import com.max.musiccloud.ui.theme.AccentPink
-import com.max.musiccloud.ui.theme.AccentPurple
-import com.max.musiccloud.ui.theme.DarkBg
-import com.max.musiccloud.ui.theme.DarkSurface
-import com.max.musiccloud.ui.theme.DarkSurfaceElevated
-import com.max.musiccloud.ui.theme.DarkSurfaceVariant
+import com.max.musiccloud.ui.theme.AppTheme
 import com.max.musiccloud.ui.theme.SuccessGreen
-import com.max.musiccloud.ui.theme.TextPrimary
-import com.max.musiccloud.ui.theme.TextSecondary
-import com.max.musiccloud.ui.theme.TextTertiary
+import com.max.musiccloud.ui.theme.ThemeMode
 
 @Composable
 fun LibraryScreen(
     viewModel: MainViewModel
 ) {
     val context = LocalContext.current
+    val colors = AppTheme.colors
+
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     val tracks by viewModel.tracks.collectAsStateWithLifecycle()
+    val allTracksCount by viewModel.allTracksCount.collectAsStateWithLifecycle()
+    val favoriteTracksCount by viewModel.favoriteTracksCount.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val currentFilter by viewModel.currentFilter.collectAsStateWithLifecycle()
     val syncState by viewModel.syncState.collectAsStateWithLifecycle()
     val playerState by viewModel.playerState.collectAsStateWithLifecycle()
     val isFullPlayerVisible by viewModel.isFullPlayerVisible.collectAsStateWithLifecycle()
     val isByokSettingsVisible by viewModel.isByokSettingsVisible.collectAsStateWithLifecycle()
+    val isThemeDialogVisible by viewModel.isThemeDialogVisible.collectAsStateWithLifecycle()
+    val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val webClientId by viewModel.webClientId.collectAsStateWithLifecycle()
     val clientSecret by viewModel.clientSecret.collectAsStateWithLifecycle()
     val targetFolderName by viewModel.targetFolderName.collectAsStateWithLifecycle()
@@ -127,7 +131,7 @@ fun LibraryScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBg)
+            .background(colors.bg)
     ) {
         Column(
             modifier = Modifier
@@ -147,7 +151,7 @@ fun LibraryScreen(
                         modifier = Modifier
                             .size(38.dp)
                             .clip(CircleShape)
-                            .background(Brush.linearGradient(listOf(AccentPurple, AccentCyan))),
+                            .background(Brush.linearGradient(listOf(colors.accentPurple, colors.accentCyan))),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -165,12 +169,12 @@ fun LibraryScreen(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 20.sp
                             ),
-                            color = TextPrimary
+                            color = colors.textPrimary
                         )
                         Text(
                             text = if (targetFolderName.isNotBlank()) "Google Drive • $targetFolderName" else "Google Drive Streamer (BYOK)",
                             style = MaterialTheme.typography.labelSmall,
-                            color = TextSecondary
+                            color = colors.textSecondary
                         )
                     }
                 }
@@ -185,7 +189,7 @@ fun LibraryScreen(
                             Icon(
                                 imageVector = Icons.Default.CloudSync,
                                 contentDescription = "Sync",
-                                tint = if (syncState is SyncState.Syncing) AccentCyan else TextPrimary,
+                                tint = if (syncState is SyncState.Syncing) colors.accentCyan else colors.textPrimary,
                                 modifier = Modifier
                                     .size(24.dp)
                                     .rotate(if (syncState is SyncState.Syncing) syncRotation else 0f)
@@ -202,15 +206,15 @@ fun LibraryScreen(
                                     modifier = Modifier
                                         .size(36.dp)
                                         .clip(CircleShape)
-                                        .background(AccentPurple.copy(alpha = 0.3f))
-                                        .border(1.dp, AccentPurple, CircleShape)
+                                        .background(colors.accentPurple.copy(alpha = 0.3f))
+                                        .border(1.dp, colors.accentPurple, CircleShape)
                                         .clickable { showMenu = true },
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
                                         text = state.user.displayName.firstOrNull()?.uppercase() ?: "U",
                                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                                        color = Color.White
+                                        color = if (colors.isDark) Color.White else colors.accentPurple
                                     )
                                 }
                             }
@@ -222,7 +226,7 @@ fun LibraryScreen(
                                     Icon(
                                         imageVector = Icons.Default.Settings,
                                         contentDescription = "Settings",
-                                        tint = TextSecondary
+                                        tint = colors.textSecondary
                                     )
                                 }
                             }
@@ -231,24 +235,57 @@ fun LibraryScreen(
                         DropdownMenu(
                             expanded = showMenu,
                             onDismissRequest = { showMenu = false },
-                            modifier = Modifier.background(DarkSurfaceElevated)
+                            modifier = Modifier.background(colors.surfaceElevated)
                         ) {
                             if (authState is AuthState.SignedIn) {
                                 val user = (authState as AuthState.SignedIn).user
                                 DropdownMenuItem(
                                     text = {
                                         Column {
-                                            Text(user.displayName, color = TextPrimary, fontWeight = FontWeight.Bold)
-                                            Text(user.email, color = TextSecondary, fontSize = 12.sp)
+                                            Text(user.displayName, color = colors.textPrimary, fontWeight = FontWeight.Bold)
+                                            Text(user.email, color = colors.textSecondary, fontSize = 12.sp)
                                         }
                                     },
                                     onClick = {}
                                 )
                             }
 
+                            // Theme Selector Menu Item
                             DropdownMenuItem(
-                                text = { Text("Ключи API (BYOK)", color = TextPrimary) },
-                                leadingIcon = { Icon(Icons.Default.Key, contentDescription = null, tint = AccentCyan) },
+                                text = {
+                                    Column {
+                                        Text("Тема оформления", color = colors.textPrimary)
+                                        Text(
+                                            text = when (themeMode) {
+                                                ThemeMode.SYSTEM -> "Системная"
+                                                ThemeMode.DARK -> "Тёмная"
+                                                ThemeMode.LIGHT -> "Светлая"
+                                            },
+                                            color = colors.textSecondary,
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = when (themeMode) {
+                                            ThemeMode.SYSTEM -> Icons.Default.BrightnessAuto
+                                            ThemeMode.DARK -> Icons.Default.DarkMode
+                                            ThemeMode.LIGHT -> Icons.Default.LightMode
+                                        },
+                                        contentDescription = null,
+                                        tint = colors.accentPurple
+                                    )
+                                },
+                                onClick = {
+                                    showMenu = false
+                                    viewModel.setThemeDialogVisible(true)
+                                }
+                            )
+
+                            DropdownMenuItem(
+                                text = { Text("Ключи API (BYOK)", color = colors.textPrimary) },
+                                leadingIcon = { Icon(Icons.Default.Key, contentDescription = null, tint = colors.accentCyan) },
                                 onClick = {
                                     showMenu = false
                                     viewModel.setByokSettingsVisible(true)
@@ -257,8 +294,8 @@ fun LibraryScreen(
 
                             if (authState is AuthState.SignedIn) {
                                 DropdownMenuItem(
-                                    text = { Text("Выйти из аккаунта", color = AccentPink) },
-                                    leadingIcon = { Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = AccentPink) },
+                                    text = { Text("Выйти из аккаунта", color = colors.accentPink) },
+                                    leadingIcon = { Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = colors.accentPink) },
                                     onClick = {
                                         showMenu = false
                                         viewModel.signOut(clearKeys = false)
@@ -266,8 +303,8 @@ fun LibraryScreen(
                                 )
 
                                 DropdownMenuItem(
-                                    text = { Text("Сбросить ключи и выйти", color = AccentPink) },
-                                    leadingIcon = { Icon(Icons.Default.RestartAlt, contentDescription = null, tint = AccentPink) },
+                                    text = { Text("Сбросить ключи и выйти", color = colors.accentPink) },
+                                    leadingIcon = { Icon(Icons.Default.RestartAlt, contentDescription = null, tint = colors.accentPink) },
                                     onClick = {
                                         showMenu = false
                                         viewModel.signOut(clearKeys = true)
@@ -290,15 +327,15 @@ fun LibraryScreen(
                         Text(
                             text = state.message,
                             style = MaterialTheme.typography.bodySmall,
-                            color = AccentCyan
+                            color = colors.accentCyan
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         LinearProgressIndicator(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(2.dp),
-                            color = AccentCyan,
-                            trackColor = Color.White.copy(alpha = 0.05f)
+                            color = colors.accentCyan,
+                            trackColor = colors.border.copy(alpha = 0.2f)
                         )
                     }
                 }
@@ -318,24 +355,24 @@ fun LibraryScreen(
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { viewModel.onSearchQueryChanged(it) },
-                    placeholder = { Text("Search songs, artists, albums...", color = TextTertiary) },
+                    placeholder = { Text("Search songs, artists, albums...", color = colors.textTertiary) },
                     leadingIcon = {
-                        Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondary)
+                        Icon(Icons.Default.Search, contentDescription = null, tint = colors.textSecondary)
                     },
                     trailingIcon = {
                         if (searchQuery.isNotBlank()) {
                             IconButton(onClick = { viewModel.onSearchQueryChanged("") }) {
-                                Icon(Icons.Default.Clear, contentDescription = "Clear", tint = TextSecondary)
+                                Icon(Icons.Default.Clear, contentDescription = "Clear", tint = colors.textSecondary)
                             }
                         }
                     },
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = DarkSurfaceVariant,
-                        unfocusedContainerColor = DarkSurface,
-                        focusedBorderColor = AccentPurple,
-                        unfocusedBorderColor = Color.Transparent,
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary
+                        focusedContainerColor = colors.surfaceVariant,
+                        unfocusedContainerColor = colors.surface,
+                        focusedBorderColor = colors.accentPurple,
+                        unfocusedBorderColor = colors.border.copy(alpha = if (colors.isDark) 0.15f else 0.6f),
+                        focusedTextColor = colors.textPrimary,
+                        unfocusedTextColor = colors.textPrimary
                     ),
                     shape = RoundedCornerShape(16.dp),
                     singleLine = true,
@@ -354,12 +391,12 @@ fun LibraryScreen(
                     FilterChip(
                         selected = currentFilter == TrackFilter.ALL,
                         onClick = { viewModel.setFilter(TrackFilter.ALL) },
-                        label = { Text("All Tracks (${tracks.size})") },
+                        label = { Text("All Tracks ($allTracksCount)") },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = AccentPurple,
+                            selectedContainerColor = colors.accentPurple,
                             selectedLabelColor = Color.White,
-                            containerColor = DarkSurfaceVariant,
-                            labelColor = TextSecondary
+                            containerColor = colors.surfaceVariant,
+                            labelColor = colors.textSecondary
                         ),
                         border = null,
                         shape = RoundedCornerShape(12.dp)
@@ -367,15 +404,15 @@ fun LibraryScreen(
                     FilterChip(
                         selected = currentFilter == TrackFilter.FAVORITES,
                         onClick = { viewModel.setFilter(TrackFilter.FAVORITES) },
-                        label = { Text("Favorites") },
+                        label = { Text("Favorites ($favoriteTracksCount)") },
                         leadingIcon = {
                             Icon(Icons.Default.Favorite, contentDescription = null, modifier = Modifier.size(14.dp))
                         },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = AccentPink,
+                            selectedContainerColor = colors.accentPink,
                             selectedLabelColor = Color.White,
-                            containerColor = DarkSurfaceVariant,
-                            labelColor = TextSecondary
+                            containerColor = colors.surfaceVariant,
+                            labelColor = colors.textSecondary
                         ),
                         border = null,
                         shape = RoundedCornerShape(12.dp)
@@ -398,15 +435,15 @@ fun LibraryScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(24.dp))
-                                .background(DarkSurface)
-                                .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(24.dp))
+                                .background(colors.surface)
+                                .border(1.dp, colors.border.copy(alpha = if (colors.isDark) 0.15f else 0.8f), RoundedCornerShape(24.dp))
                                 .padding(28.dp)
                         ) {
                             Box(
                                 modifier = Modifier
                                     .size(68.dp)
                                     .clip(CircleShape)
-                                    .background(Brush.linearGradient(listOf(AccentPurple, AccentCyan))),
+                                    .background(Brush.linearGradient(listOf(colors.accentPurple, colors.accentCyan))),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
@@ -420,13 +457,13 @@ fun LibraryScreen(
                             Text(
                                 text = "Войти в Google Drive (OAuth 2.0)",
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, fontSize = 18.sp),
-                                color = TextPrimary
+                                color = colors.textPrimary
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = "Потоковое воспроизведение музыки из облака Google Drive с поддержкой собственных ключей (BYOK).",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = TextSecondary,
+                                color = colors.textSecondary,
                                 textAlign = TextAlign.Center
                             )
 
@@ -446,7 +483,8 @@ fun LibraryScreen(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(DarkSurfaceVariant)
+                                    .background(colors.surfaceVariant)
+                                    .border(1.dp, colors.border.copy(alpha = if (colors.isDark) 0.15f else 0.6f), RoundedCornerShape(12.dp))
                                     .clickable { viewModel.setByokSettingsVisible(true) }
                                     .padding(horizontal = 12.dp, vertical = 6.dp)
                             ) {
@@ -457,7 +495,7 @@ fun LibraryScreen(
                                     Icon(
                                         imageVector = if (webClientId.isNotBlank() && !isBad) Icons.Default.CheckCircle else Icons.Default.Warning,
                                         contentDescription = null,
-                                        tint = if (webClientId.isNotBlank() && !isBad) SuccessGreen else AccentPink,
+                                        tint = if (webClientId.isNotBlank() && !isBad) SuccessGreen else colors.accentPink,
                                         modifier = Modifier.size(14.dp)
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
@@ -472,7 +510,7 @@ fun LibraryScreen(
                                             }
                                         },
                                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
-                                        color = if (webClientId.isNotBlank() && !isBad) TextSecondary else AccentPink
+                                        color = if (webClientId.isNotBlank() && !isBad) colors.textSecondary else colors.accentPink
                                     )
                                 }
                             }
@@ -487,21 +525,21 @@ fun LibraryScreen(
                                         viewModel.startOAuthFlow(context)
                                     }
                                 },
-                                colors = ButtonDefaults.buttonColors(containerColor = AccentPurple),
+                                colors = ButtonDefaults.buttonColors(containerColor = colors.accentPurple),
                                 shape = RoundedCornerShape(16.dp),
                                 contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null, modifier = Modifier.size(18.dp), tint = Color.White)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Авторизоваться через Google", fontWeight = FontWeight.Bold)
+                                Text("Авторизоваться через Google", fontWeight = FontWeight.Bold, color = Color.White)
                             }
 
                             Spacer(modifier = Modifier.height(10.dp))
 
                             OutlinedButton(
                                 onClick = { viewModel.setByokSettingsVisible(true) },
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentCyan),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.accentCyan),
                                 shape = RoundedCornerShape(16.dp),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
@@ -517,7 +555,7 @@ fun LibraryScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = AccentPurple)
+                        CircularProgressIndicator(color = colors.accentPurple)
                     }
                 }
                 is AuthState.SignedIn -> {
@@ -528,35 +566,81 @@ fun LibraryScreen(
                                 .padding(24.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(
-                                    imageVector = Icons.Default.LibraryMusic,
-                                    contentDescription = null,
-                                    tint = TextTertiary,
-                                    modifier = Modifier.size(64.dp)
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text(
-                                    text = if (searchQuery.isNotBlank()) "No matching tracks" else "No audio files indexed yet",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = TextSecondary
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "Tap 'Sync Drive' to scan your Google Drive for audio files",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = TextTertiary,
-                                    textAlign = TextAlign.Center
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Button(
-                                    onClick = { viewModel.startSync() },
-                                    colors = ButtonDefaults.buttonColors(containerColor = AccentPurple),
-                                    shape = RoundedCornerShape(14.dp)
+                            if (currentFilter == TrackFilter.FAVORITES) {
+                                // Favorites empty state
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.padding(16.dp)
                                 ) {
-                                    Icon(Icons.Default.CloudSync, contentDescription = null, modifier = Modifier.size(18.dp))
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Sync Now")
+                                    Box(
+                                        modifier = Modifier
+                                            .size(72.dp)
+                                            .clip(CircleShape)
+                                            .background(colors.accentPink.copy(alpha = if (colors.isDark) 0.15f else 0.1f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.FavoriteBorder,
+                                            contentDescription = null,
+                                            tint = colors.accentPink,
+                                            modifier = Modifier.size(38.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(18.dp))
+                                    Text(
+                                        text = if (searchQuery.isNotBlank()) "Ничего не найдено в избранном" else "В избранном пока пусто",
+                                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = colors.textPrimary,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = if (searchQuery.isNotBlank()) "Попробуйте изменить поисковый запрос" else "Нажмите на сердечко у любого трека, чтобы добавить его сюда",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = colors.textSecondary,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(20.dp))
+                                    Button(
+                                        onClick = { viewModel.setFilter(TrackFilter.ALL) },
+                                        colors = ButtonDefaults.buttonColors(containerColor = colors.accentPurple),
+                                        shape = RoundedCornerShape(14.dp)
+                                    ) {
+                                        Text("Все треки ($allTracksCount)", color = Color.White, fontWeight = FontWeight.SemiBold)
+                                    }
+                                }
+                            } else {
+                                // All tracks empty state
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Icon(
+                                        imageVector = Icons.Default.LibraryMusic,
+                                        contentDescription = null,
+                                        tint = colors.textTertiary,
+                                        modifier = Modifier.size(64.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(
+                                        text = if (searchQuery.isNotBlank()) "No matching tracks" else "No audio files indexed yet",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = colors.textSecondary
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Tap 'Sync Drive' to scan your Google Drive for audio files",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = colors.textTertiary,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Button(
+                                        onClick = { viewModel.startSync() },
+                                        colors = ButtonDefaults.buttonColors(containerColor = colors.accentPurple),
+                                        shape = RoundedCornerShape(14.dp)
+                                    ) {
+                                        Icon(Icons.Default.CloudSync, contentDescription = null, modifier = Modifier.size(18.dp), tint = Color.White)
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Sync Now", color = Color.White)
+                                    }
                                 }
                             }
                         }
@@ -611,7 +695,10 @@ fun LibraryScreen(
                 onSkipPreviousClick = { viewModel.skipToPrevious() },
                 onToggleShuffle = { viewModel.toggleShuffle() },
                 onCycleRepeat = { viewModel.cycleRepeatMode() },
-                onToggleFavorite = { viewModel.toggleFavorite(it) }
+                onToggleFavorite = { viewModel.toggleFavorite(it) },
+                onMoveTrackInQueue = { from, to -> viewModel.moveTrackInQueue(from, to) },
+                onRemoveTrackFromQueue = { viewModel.removeTrackFromQueue(it) },
+                onPlayQueueItem = { viewModel.playQueueItem(it) }
             )
         }
 
@@ -632,6 +719,15 @@ fun LibraryScreen(
                 onDismissRequest = {
                     viewModel.setByokSettingsVisible(false)
                 }
+            )
+        }
+
+        // Theme Selection Dialog
+        if (isThemeDialogVisible) {
+            ThemeSelectionDialog(
+                currentMode = themeMode,
+                onSelectMode = { viewModel.setThemeMode(it) },
+                onDismissRequest = { viewModel.setThemeDialogVisible(false) }
             )
         }
     }

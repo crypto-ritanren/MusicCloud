@@ -8,6 +8,7 @@ import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -91,6 +92,10 @@ class PlaybackConnection(private val context: Context) {
             }
 
             override fun onPlaybackStateChanged(playbackState: Int) {
+                updateStateFromPlayer()
+            }
+
+            override fun onTimelineChanged(timeline: Timeline, reason: Int) {
                 updateStateFromPlayer()
             }
 
@@ -278,6 +283,56 @@ class PlaybackConnection(private val context: Context) {
             else -> Player.REPEAT_MODE_OFF
         }
         p.repeatMode = nextMode
+    }
+
+    fun moveTrackInQueue(fromIndex: Int, toIndex: Int) {
+        val p = controller ?: return
+        if (fromIndex !in currentPlaylist.indices || toIndex !in currentPlaylist.indices || fromIndex == toIndex) return
+
+        val mutableList = currentPlaylist.toMutableList()
+        val movedItem = mutableList.removeAt(fromIndex)
+        mutableList.add(toIndex, movedItem)
+        currentPlaylist = mutableList
+
+        p.moveMediaItem(fromIndex, toIndex)
+
+        _playerState.update {
+            it.copy(playlist = currentPlaylist)
+        }
+    }
+
+    fun removeTrackFromQueue(index: Int) {
+        val p = controller ?: return
+        if (index !in currentPlaylist.indices) return
+
+        val mutableList = currentPlaylist.toMutableList()
+        mutableList.removeAt(index)
+        currentPlaylist = mutableList
+
+        p.removeMediaItem(index)
+
+        if (currentPlaylist.isEmpty()) {
+            _playerState.update {
+                it.copy(
+                    currentTrack = null,
+                    playlist = emptyList(),
+                    isPlaying = false,
+                    currentPositionMs = 0L,
+                    durationMs = 0L
+                )
+            }
+        } else {
+            _playerState.update {
+                it.copy(playlist = currentPlaylist)
+            }
+        }
+    }
+
+    fun playQueueItem(index: Int) {
+        val p = controller ?: return
+        if (index !in currentPlaylist.indices) return
+        p.seekTo(index, 0L)
+        p.play()
     }
 
     fun release() {

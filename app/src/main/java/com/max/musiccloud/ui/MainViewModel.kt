@@ -9,6 +9,7 @@ import com.max.musiccloud.data.auth.AuthState
 import com.max.musiccloud.data.local.TrackEntity
 import com.max.musiccloud.data.remote.SyncState
 import com.max.musiccloud.playback.PlayerState
+import com.max.musiccloud.ui.theme.ThemeMode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -38,6 +40,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val webClientId: StateFlow<String> = authRepo.webClientId
     val clientSecret: StateFlow<String> = authRepo.clientSecret
     val targetFolderName: StateFlow<String> = authRepo.targetFolderName
+    val themeMode: StateFlow<ThemeMode> = authRepo.themeMode
+
+    private val _isThemeDialogVisible = MutableStateFlow(false)
+    val isThemeDialogVisible: StateFlow<Boolean> = _isThemeDialogVisible.asStateFlow()
 
     private val _isByokSettingsVisible = MutableStateFlow(false)
     val isByokSettingsVisible: StateFlow<Boolean> = _isByokSettingsVisible.asStateFlow()
@@ -54,17 +60,45 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _isFullPlayerVisible = MutableStateFlow(false)
     val isFullPlayerVisible: StateFlow<Boolean> = _isFullPlayerVisible.asStateFlow()
 
+    val allTracksCount: StateFlow<Int> = trackDao.getAllTracks()
+        .map { it.size }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = 0
+        )
+
+    val favoriteTracksCount: StateFlow<Int> = trackDao.getFavoriteTracks()
+        .map { it.size }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = 0
+        )
+
     val tracks: StateFlow<List<TrackEntity>> = combine(
         _searchQuery,
         _currentFilter
     ) { query, filter -> Pair(query, filter) }
         .flatMapLatest { (query, filter) ->
-            if (filter == TrackFilter.FAVORITES) {
-                trackDao.getFavoriteTracks()
-            } else if (query.isBlank()) {
-                trackDao.getAllTracks()
-            } else {
-                trackDao.searchTracks(query.trim())
+            when (filter) {
+                TrackFilter.FAVORITES -> {
+                    trackDao.getFavoriteTracks().map { list ->
+                        if (query.isBlank()) list
+                        else list.filter {
+                            it.title.contains(query.trim(), ignoreCase = true) ||
+                            it.artist.contains(query.trim(), ignoreCase = true) ||
+                            it.album.contains(query.trim(), ignoreCase = true)
+                        }
+                    }
+                }
+                TrackFilter.ALL -> {
+                    if (query.isBlank()) {
+                        trackDao.getAllTracks()
+                    } else {
+                        trackDao.searchTracks(query.trim())
+                    }
+                }
             }
         }.stateIn(
             scope = viewModelScope,
@@ -95,6 +129,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setByokSettingsVisible(visible: Boolean) {
         _isByokSettingsVisible.value = visible
+    }
+
+    fun setThemeDialogVisible(visible: Boolean) {
+        _isThemeDialogVisible.value = visible
+    }
+
+    fun setThemeMode(mode: ThemeMode) {
+        authRepo.setThemeMode(mode)
     }
 
     fun saveByokKeys(clientId: String, secret: String, targetFolder: String = authRepo.targetFolderName.value) {
@@ -164,6 +206,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun cycleRepeatMode() {
         playback.cycleRepeatMode()
+    }
+
+    fun moveTrackInQueue(fromIndex: Int, toIndex: Int) {
+        playback.moveTrackInQueue(fromIndex, toIndex)
+    }
+
+    fun removeTrackFromQueue(index: Int) {
+        playback.removeTrackFromQueue(index)
+    }
+
+    fun playQueueItem(index: Int) {
+        playback.playQueueItem(index)
     }
 
     fun toggleFavorite(track: TrackEntity) {
